@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unreal Engine Color to LUT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Unreal Engine Color to Denormalizing LUT</h2>
+    <label for="colorInput">Enter Normalizer (R, G, B, A):</label>
+    <input type="text" id="colorInput" placeholder="e.g., (R=0.487462,G=0.552115,B=1.000000,A=1.000000)">
+    <button onclick="generateLUT()">Download DenormalizingLUT.cube</button>
+</div>
+
+<script>
+    function generateLUT() {
+        const input = document.getElementById('colorInput').value;
+        const matches = input.match(/\(([^)]+)\)/);
+        if (!matches) {
+            alert('Please enter the color in the correct format: (R=0.487462,G=0.552115,B=1.000000,A=1.000000)');
+            return;
+        }
+
+        const colorValues = matches[1].split(',').map(part => parseFloat(part.split('=')[1]));
+        if (colorValues.length !== 4) {
+            alert('Please enter four values for R, G, B, and A.');
+            return;
+        }
+
+        const [R, G, B, A] = colorValues;
+        const inverseR = (1 / R).toFixed(6);
+        const inverseG = (1 / G).toFixed(6);
+        const inverseB = (1 / B).toFixed(6);
+
+        const lutContent = `
+LUT_1D_SIZE 3
+LUT_1D_INPUT_RANGE 0 2
+0 0 0
+${inverseR} ${inverseG} ${inverseB}  #this line is multipliers
+1 1 1
+        `.trim();
+
+        const blob = new Blob([lutContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'DenormalizingLUT.cube';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+</script>
+
+</body>
+</html>
